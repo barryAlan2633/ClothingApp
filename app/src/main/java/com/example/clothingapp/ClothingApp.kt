@@ -9,6 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -36,9 +38,14 @@ fun ClothingApp() {
         }
         
         composable("wardrobe") { 
-            val wardrobeViewModel = viewModel<WardrobeViewModel> {
-                WardrobeViewModel(repository)
-            }
+            val wardrobeViewModel: WardrobeViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return WardrobeViewModel(repository) as T
+                    }
+                }
+            )
             WardrobeScreen(navController, wardrobeViewModel)
         }
         
@@ -54,9 +61,14 @@ fun ClothingApp() {
             arguments = listOf(navArgument("imageUri") { type = NavType.StringType })
         ) { backStackEntry ->
             val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
-            val addItemViewModel = viewModel<AddItemViewModel> {
-                AddItemViewModel(repository)
-            }
+            val addItemViewModel: AddItemViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return AddItemViewModel(repository) as T
+                    }
+                }
+            )
             AddItemScreen(
                 navController = navController,
                 imageUri = imageUri,
