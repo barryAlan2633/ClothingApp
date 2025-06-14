@@ -1,0 +1,345 @@
+package com.example.clothingapp.ui.edit
+
+import android.net.Uri
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import com.example.clothingapp.data.*
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditItemScreen(
+    navController: NavController,
+    viewModel: EditItemViewModel,
+    itemId: Int
+) {
+    val item by viewModel.item.collectAsState()
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    
+    LaunchedEffect(itemId) {
+        viewModel.loadItem(itemId)
+    }
+    
+    if (item == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    
+    val currentItem = item!!
+    
+    var name by remember { mutableStateOf(currentItem.name) }
+    var category by remember { mutableStateOf(currentItem.category) }
+    var color by remember { mutableStateOf(currentItem.color) }
+    var secondaryColor by remember { mutableStateOf(currentItem.secondaryColor ?: "") }
+    var pattern by remember { mutableStateOf(currentItem.pattern ?: "") }
+    var fabricType by remember { mutableStateOf(currentItem.fabricType) }
+    var size by remember { mutableStateOf(currentItem.size) }
+    var style by remember { mutableStateOf(currentItem.style) }
+    var dressCode by remember { mutableStateOf(currentItem.dressCode) }
+    var brand by remember { mutableStateOf(currentItem.brand ?: "") }
+    var notes by remember { mutableStateOf(currentItem.notes ?: "") }
+    var purchasePrice by remember { mutableStateOf(currentItem.purchasePrice?.toString() ?: "") }
+    
+    var showCategoryMenu by remember { mutableStateOf(false) }
+    var showFabricMenu by remember { mutableStateOf(false) }
+    var showStyleMenu by remember { mutableStateOf(false) }
+    var showDressCodeMenu by remember { mutableStateOf(false) }
+    
+    // Update state when item changes
+    LaunchedEffect(currentItem) {
+        name = currentItem.name
+        category = currentItem.category
+        color = currentItem.color
+        secondaryColor = currentItem.secondaryColor ?: ""
+        pattern = currentItem.pattern ?: ""
+        fabricType = currentItem.fabricType
+        size = currentItem.size
+        style = currentItem.style
+        dressCode = currentItem.dressCode
+        brand = currentItem.brand ?: ""
+        notes = currentItem.notes ?: ""
+        purchasePrice = currentItem.purchasePrice?.toString() ?: ""
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Edit Item") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                val updatedItem = currentItem.copy(
+                                    name = name,
+                                    category = category,
+                                    color = color,
+                                    secondaryColor = secondaryColor.ifEmpty { null },
+                                    pattern = pattern.ifEmpty { null },
+                                    fabricType = fabricType,
+                                    size = size,
+                                    style = style,
+                                    dressCode = dressCode,
+                                    brand = brand.ifEmpty { null },
+                                    notes = notes.ifEmpty { null },
+                                    purchasePrice = purchasePrice.toDoubleOrNull()
+                                )
+                                viewModel.updateItem(updatedItem)
+                                navController.popBackStack()
+                            }
+                        },
+                        enabled = name.isNotBlank() && size.isNotBlank() && color.isNotBlank()
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = "Save")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Image Preview
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(Uri.parse(currentItem.imageUri)),
+                    contentDescription = "Item image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            
+            // Name Input
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Item Name *") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            // Category Dropdown
+            ExposedDropdownMenuBox(
+                expanded = showCategoryMenu,
+                onExpandedChange = { showCategoryMenu = !showCategoryMenu }
+            ) {
+                OutlinedTextField(
+                    value = category.name.replace("_", " "),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Category *") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCategoryMenu) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = showCategoryMenu,
+                    onDismissRequest = { showCategoryMenu = false }
+                ) {
+                    ClothingCategory.values().forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item.name.replace("_", " ")) },
+                            onClick = {
+                                category = item
+                                showCategoryMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Color Inputs
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = color,
+                    onValueChange = { color = it },
+                    label = { Text("Primary Color *") },
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = secondaryColor,
+                    onValueChange = { secondaryColor = it },
+                    label = { Text("Secondary Color") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            // Pattern Input
+            OutlinedTextField(
+                value = pattern,
+                onValueChange = { pattern = it },
+                label = { Text("Pattern (e.g., striped, floral)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            // Fabric Type Dropdown
+            ExposedDropdownMenuBox(
+                expanded = showFabricMenu,
+                onExpandedChange = { showFabricMenu = !showFabricMenu }
+            ) {
+                OutlinedTextField(
+                    value = fabricType.name.replace("_", " "),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Fabric Type *") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFabricMenu) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = showFabricMenu,
+                    onDismissRequest = { showFabricMenu = false }
+                ) {
+                    FabricType.values().forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item.name.replace("_", " ")) },
+                            onClick = {
+                                fabricType = item
+                                showFabricMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Size and Brand Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = size,
+                    onValueChange = { size = it },
+                    label = { Text("Size *") },
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = brand,
+                    onValueChange = { brand = it },
+                    label = { Text("Brand") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            // Style Dropdown
+            ExposedDropdownMenuBox(
+                expanded = showStyleMenu,
+                onExpandedChange = { showStyleMenu = !showStyleMenu }
+            ) {
+                OutlinedTextField(
+                    value = style.name.replace("_", " "),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Style *") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStyleMenu) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = showStyleMenu,
+                    onDismissRequest = { showStyleMenu = false }
+                ) {
+                    ClothingStyle.values().forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item.name.replace("_", " ")) },
+                            onClick = {
+                                style = item
+                                showStyleMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Dress Code Dropdown
+            ExposedDropdownMenuBox(
+                expanded = showDressCodeMenu,
+                onExpandedChange = { showDressCodeMenu = !showDressCodeMenu }
+            ) {
+                OutlinedTextField(
+                    value = dressCode.name.replace("_", " "),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Dress Code *") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showDressCodeMenu) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = showDressCodeMenu,
+                    onDismissRequest = { showDressCodeMenu = false }
+                ) {
+                    DressCode.values().forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item.name.replace("_", " ")) },
+                            onClick = {
+                                dressCode = item
+                                showDressCodeMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Purchase Price Input
+            OutlinedTextField(
+                value = purchasePrice,
+                onValueChange = { purchasePrice = it },
+                label = { Text("Purchase Price") },
+                modifier = Modifier.fillMaxWidth(),
+                prefix = { Text("$") }
+            )
+            
+            // Notes Input
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Notes") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3
+            )
+        }
+    }
+}

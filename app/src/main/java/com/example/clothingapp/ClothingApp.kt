@@ -24,6 +24,10 @@ import com.example.clothingapp.ui.camera.CameraScreen
 import com.example.clothingapp.ui.home.HomeScreen
 import com.example.clothingapp.ui.wardrobe.WardrobeScreen
 import com.example.clothingapp.ui.wardrobe.WardrobeViewModel
+import com.example.clothingapp.ui.detail.ItemDetailScreen
+import com.example.clothingapp.ui.detail.ItemDetailViewModel
+import com.example.clothingapp.ui.edit.EditItemScreen
+import com.example.clothingapp.ui.edit.EditItemViewModel
 
 @Composable
 fun ClothingApp() {
@@ -81,7 +85,39 @@ fun ClothingApp() {
             arguments = listOf(navArgument("itemId") { type = NavType.IntType })
         ) { backStackEntry ->
             val itemId = backStackEntry.arguments?.getInt("itemId") ?: 0
-            // TODO: Create ItemDetailScreen
+            val detailViewModel: ItemDetailViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return ItemDetailViewModel(repository) as T
+                    }
+                }
+            )
+            ItemDetailScreen(
+                navController = navController,
+                viewModel = detailViewModel,
+                itemId = itemId
+            )
+        }
+        
+        composable(
+            "edit_item/{itemId}",
+            arguments = listOf(navArgument("itemId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getInt("itemId") ?: 0
+            val editViewModel: EditItemViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return EditItemViewModel(repository) as T
+                    }
+                }
+            )
+            EditItemScreen(
+                navController = navController,
+                viewModel = editViewModel,
+                itemId = itemId
+            )
         }
     }
 }
