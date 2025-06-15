@@ -164,7 +164,7 @@ fun EditItemScreen(
                         painter = rememberAsyncImagePainter(Uri.parse(currentItem.imageUri)),
                         contentDescription = "Item image",
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Fit
                     )
                     
                     // Hint overlay

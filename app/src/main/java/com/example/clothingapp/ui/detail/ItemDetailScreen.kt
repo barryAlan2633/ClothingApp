@@ -124,7 +124,7 @@ fun ItemDetailScreen(
                         painter = rememberAsyncImagePainter(Uri.parse(currentItem.imageUri)),
                         contentDescription = currentItem.name,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Fit
                     )
                     
                     // Hint overlay

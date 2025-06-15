@@ -114,7 +114,7 @@ fun AddItemScreen(
                     painter = rememberAsyncImagePainter(Uri.parse(imageUri)),
                     contentDescription = "Captured clothing",
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Fit
                 )
             }
             
