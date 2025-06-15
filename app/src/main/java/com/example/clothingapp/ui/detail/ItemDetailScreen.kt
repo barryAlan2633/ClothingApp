@@ -148,7 +148,7 @@ fun ItemDetailScreen(
             // Basic Info Card
             InfoCard(title = "Basic Information") {
                 InfoRow("Name", currentItem.name)
-                InfoRow("Category", currentItem.category.name.replace("_", " "))
+                InfoRow("Categories", currentItem.categories.joinToString(", ") { it.displayName })
                 InfoRow("Size", currentItem.size)
                 currentItem.brand?.let { InfoRow("Brand", it) }
             }
@@ -160,7 +160,7 @@ fun ItemDetailScreen(
                 currentItem.pattern?.let { InfoRow("Pattern", it) }
                 InfoRow("Fabric Type", currentItem.fabricType.name.replace("_", " "))
                 InfoRow("Style", currentItem.style.name.replace("_", " "))
-                InfoRow("Dress Code", currentItem.dressCode.name.replace("_", " "))
+                InfoRow("Dress Codes", currentItem.dressCodes.joinToString(", ") { it.name.replace("_", " ") })
             }
             
             // Usage Stats Card

@@ -8,7 +8,7 @@ interface ClothingDao {
     @Query("SELECT * FROM clothing_items ORDER BY createdAt DESC")
     fun getAllItems(): Flow<List<ClothingItem>>
     
-    @Query("SELECT * FROM clothing_items WHERE category = :category ORDER BY createdAt DESC")
+    @Query("SELECT * FROM clothing_items WHERE categories LIKE '%' || :category || '%' ORDER BY createdAt DESC")
     fun getItemsByCategory(category: ClothingCategory): Flow<List<ClothingItem>>
     
     @Query("SELECT * FROM clothing_items WHERE id = :id")
@@ -20,7 +20,7 @@ interface ClothingDao {
     @Query("SELECT * FROM clothing_items WHERE color LIKE :color OR secondaryColor LIKE :color ORDER BY createdAt DESC")
     fun getItemsByColor(color: String): Flow<List<ClothingItem>>
     
-    @Query("SELECT * FROM clothing_items WHERE dressCode = :dressCode ORDER BY createdAt DESC")
+    @Query("SELECT * FROM clothing_items WHERE dressCodes LIKE '%' || :dressCode || '%' ORDER BY createdAt DESC")
     fun getItemsByDressCode(dressCode: DressCode): Flow<List<ClothingItem>>
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -37,4 +37,10 @@ interface ClothingDao {
     
     @Query("UPDATE clothing_items SET lastWorn = :date, wearCount = wearCount + 1 WHERE id = :id")
     suspend fun updateWearInfo(id: Int, date: java.util.Date)
+    
+    @Query("UPDATE clothing_items SET isDirty = :isDirty WHERE id = :id")
+    suspend fun updateDirtyStatus(id: Int, isDirty: Boolean)
+    
+    @Query("UPDATE clothing_items SET needsRepair = :needsRepair WHERE id = :id")
+    suspend fun updateRepairStatus(id: Int, needsRepair: Boolean)
 }

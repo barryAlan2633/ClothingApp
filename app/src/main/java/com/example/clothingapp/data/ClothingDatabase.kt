@@ -50,24 +50,48 @@ class Converters {
     }
     
     @TypeConverter
-    fun fromDressCode(value: DressCode): String {
-        return value.name
+    fun fromDressCodeList(dressCodes: List<DressCode>): String {
+        return dressCodes.joinToString(",") { it.name }
+    }
+
+    @TypeConverter
+    fun toDressCodeList(dressCodesString: String): List<DressCode> {
+        if (dressCodesString.isEmpty()) return emptyList()
+        return dressCodesString.split(",").map { DressCode.valueOf(it) }
     }
     
     @TypeConverter
-    fun toDressCode(value: String): DressCode {
-        return DressCode.valueOf(value)
+    fun fromClothingCategoryList(categories: List<ClothingCategory>): String {
+        return categories.joinToString(",") { it.name }
+    }
+
+    @TypeConverter
+    fun toClothingCategoryList(categoriesString: String): List<ClothingCategory> {
+        if (categoriesString.isEmpty()) return emptyList()
+        return categoriesString.split(",").map { ClothingCategory.valueOf(it) }
+    }
+    
+    @TypeConverter
+    fun fromIntList(intList: List<Int>): String {
+        return intList.joinToString(",")
+    }
+
+    @TypeConverter
+    fun toIntList(intString: String): List<Int> {
+        if (intString.isEmpty()) return emptyList()
+        return intString.split(",").map { it.toInt() }
     }
 }
 
 @Database(
-    entities = [ClothingItem::class],
-    version = 1,
+    entities = [ClothingItem::class, Outfit::class],
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class ClothingDatabase : RoomDatabase() {
     abstract fun clothingDao(): ClothingDao
+    abstract fun outfitDao(): OutfitDao
     
     companion object {
         @Volatile
@@ -79,7 +103,8 @@ abstract class ClothingDatabase : RoomDatabase() {
                     context.applicationContext,
                     ClothingDatabase::class.java,
                     "clothing_database"
-                ).build()
+                ).fallbackToDestructiveMigration()
+                .build()
                 INSTANCE = instance
                 instance
             }

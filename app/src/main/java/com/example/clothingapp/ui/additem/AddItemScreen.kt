@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -40,7 +42,7 @@ fun AddItemScreen(
     val context = LocalContext.current
     
     var name by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf(ClothingCategory.TOP) }
+    var categories by remember { mutableStateOf(setOf<ClothingCategory>()) }
     var color by remember { mutableStateOf("") }
     var secondaryColor by remember { mutableStateOf("") }
     var isExtractingColors by remember { mutableStateOf(false) }
@@ -50,7 +52,7 @@ fun AddItemScreen(
     var fabricType by remember { mutableStateOf(FabricType.COTTON) }
     var size by remember { mutableStateOf("") }
     var style by remember { mutableStateOf(ClothingStyle.CASUAL) }
-    var dressCode by remember { mutableStateOf(DressCode.CASUAL) }
+    var dressCodes by remember { mutableStateOf(setOf<DressCode>()) }
     var brand by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     
@@ -76,14 +78,14 @@ fun AddItemScreen(
                                 val item = ClothingItem(
                                     name = name,
                                     imageUri = imageUri,
-                                    category = category,
+                                    categories = categories.toList(),
                                     color = color,
                                     secondaryColor = secondaryColor.ifEmpty { null },
                                     pattern = pattern.ifEmpty { null },
                                     fabricType = fabricType,
                                     size = size,
                                     style = style,
-                                    dressCode = dressCode,
+                                    dressCodes = dressCodes.toList(),
                                     brand = brand.ifEmpty { null },
                                     notes = notes.ifEmpty { null }
                                 )
@@ -92,7 +94,7 @@ fun AddItemScreen(
                                 navController.popBackStack()
                             }
                         },
-                        enabled = name.isNotBlank() && size.isNotBlank() && color.isNotBlank()
+                        enabled = name.isNotBlank() && size.isNotBlank() && color.isNotBlank() && dressCodes.isNotEmpty() && categories.isNotEmpty()
                     ) {
                         Icon(Icons.Default.Check, contentDescription = "Save")
                     }
@@ -222,32 +224,29 @@ fun AddItemScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            // Category Dropdown
-            ExposedDropdownMenuBox(
-                expanded = showCategoryMenu,
-                onExpandedChange = { showCategoryMenu = !showCategoryMenu }
-            ) {
-                OutlinedTextField(
-                    value = category.name,
-                    onValueChange = { },
-                    readOnly = true,
-                    label = { Text("Category *") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCategoryMenu) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+            // Category Selection
+            Column {
+                Text(
+                    text = "Categories *",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
-                ExposedDropdownMenu(
-                    expanded = showCategoryMenu,
-                    onDismissRequest = { showCategoryMenu = false }
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    ClothingCategory.values().forEach { item ->
-                        DropdownMenuItem(
-                            text = { Text(item.name) },
+                    items(ClothingCategory.values().toList()) { category ->
+                        FilterChip(
+                            selected = category in categories,
                             onClick = {
-                                category = item
-                                showCategoryMenu = false
-                            }
+                                categories = if (category in categories) {
+                                    categories - category
+                                } else {
+                                    categories + category
+                                }
+                            },
+                            label = { Text(category.displayName) }
                         )
                     }
                 }
@@ -370,32 +369,31 @@ fun AddItemScreen(
                 }
             }
             
-            // Dress Code Dropdown
-            ExposedDropdownMenuBox(
-                expanded = showDressCodeMenu,
-                onExpandedChange = { showDressCodeMenu = !showDressCodeMenu }
+            // Dress Codes Selection
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedTextField(
-                    value = dressCode.name,
-                    onValueChange = { },
-                    readOnly = true,
-                    label = { Text("Dress Code *") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showDressCodeMenu) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+                Text(
+                    text = "Dress Codes *",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                ExposedDropdownMenu(
-                    expanded = showDressCodeMenu,
-                    onDismissRequest = { showDressCodeMenu = false }
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    DressCode.values().forEach { item ->
-                        DropdownMenuItem(
-                            text = { Text(item.name) },
+                    items(DressCode.values().toList()) { dressCode ->
+                        FilterChip(
+                            selected = dressCode in dressCodes,
                             onClick = {
-                                dressCode = item
-                                showDressCodeMenu = false
-                            }
+                                dressCodes = if (dressCode in dressCodes) {
+                                    dressCodes - dressCode
+                                } else {
+                                    dressCodes + dressCode
+                                }
+                            },
+                            label = { Text(dressCode.name.replace("_", " ")) }
                         )
                     }
                 }

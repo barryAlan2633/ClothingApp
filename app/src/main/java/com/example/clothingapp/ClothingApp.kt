@@ -30,6 +30,12 @@ import com.example.clothingapp.ui.edit.EditItemScreen
 import com.example.clothingapp.ui.edit.EditItemViewModel
 import com.example.clothingapp.ui.crop.CropScreen
 import com.example.clothingapp.ui.favorites.FavoritesScreen
+import com.example.clothingapp.ui.outfits.OutfitCreatorScreen
+import com.example.clothingapp.ui.outfits.OutfitCreatorViewModel
+import com.example.clothingapp.ui.outfits.OutfitsScreen
+import com.example.clothingapp.ui.outfits.OutfitsViewModel
+import com.example.clothingapp.ui.outfits.OutfitDetailScreen
+import com.example.clothingapp.ui.outfits.OutfitDetailViewModel
 
 @Composable
 fun ClothingApp() {
@@ -147,7 +153,59 @@ fun ClothingApp() {
                     }
                 }
             )
-            FavoritesScreen(navController, wardrobeViewModel)
+            val outfitsViewModel: OutfitsViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return OutfitsViewModel(database.clothingDao(), database.outfitDao()) as T
+                    }
+                }
+            )
+            FavoritesScreen(navController, wardrobeViewModel, outfitsViewModel)
+        }
+        
+        composable("outfit_creator") {
+            val outfitCreatorViewModel: OutfitCreatorViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return OutfitCreatorViewModel(database.clothingDao(), database.outfitDao()) as T
+                    }
+                }
+            )
+            OutfitCreatorScreen(navController, outfitCreatorViewModel)
+        }
+        
+        composable("outfits") {
+            val outfitsViewModel: OutfitsViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return OutfitsViewModel(database.clothingDao(), database.outfitDao()) as T
+                    }
+                }
+            )
+            OutfitsScreen(navController, outfitsViewModel)
+        }
+        
+        composable(
+            "outfit_detail/{outfitId}",
+            arguments = listOf(navArgument("outfitId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val outfitId = backStackEntry.arguments?.getInt("outfitId") ?: 0
+            val outfitDetailViewModel: OutfitDetailViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return OutfitDetailViewModel(database.clothingDao(), database.outfitDao()) as T
+                    }
+                }
+            )
+            OutfitDetailScreen(
+                navController = navController,
+                viewModel = outfitDetailViewModel,
+                outfitId = outfitId
+            )
         }
     }
 }

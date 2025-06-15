@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -57,14 +59,14 @@ fun EditItemScreen(
     val currentItem = item!!
     
     var name by remember { mutableStateOf(currentItem.name) }
-    var category by remember { mutableStateOf(currentItem.category) }
+    var categories by remember { mutableStateOf(currentItem.categories.toSet()) }
     var color by remember { mutableStateOf(currentItem.color) }
     var secondaryColor by remember { mutableStateOf(currentItem.secondaryColor ?: "") }
     var pattern by remember { mutableStateOf(currentItem.pattern ?: "") }
     var fabricType by remember { mutableStateOf(currentItem.fabricType) }
     var size by remember { mutableStateOf(currentItem.size) }
     var style by remember { mutableStateOf(currentItem.style) }
-    var dressCode by remember { mutableStateOf(currentItem.dressCode) }
+    var dressCodes by remember { mutableStateOf(currentItem.dressCodes.toSet()) }
     var brand by remember { mutableStateOf(currentItem.brand ?: "") }
     var notes by remember { mutableStateOf(currentItem.notes ?: "") }
     var purchasePrice by remember { mutableStateOf(currentItem.purchasePrice?.toString() ?: "") }
@@ -83,14 +85,14 @@ fun EditItemScreen(
     // Update state when item changes
     LaunchedEffect(currentItem) {
         name = currentItem.name
-        category = currentItem.category
+        categories = currentItem.categories.toSet()
         color = currentItem.color
         secondaryColor = currentItem.secondaryColor ?: ""
         pattern = currentItem.pattern ?: ""
         fabricType = currentItem.fabricType
         size = currentItem.size
         style = currentItem.style
-        dressCode = currentItem.dressCode
+        dressCodes = currentItem.dressCodes.toSet()
         brand = currentItem.brand ?: ""
         notes = currentItem.notes ?: ""
         purchasePrice = currentItem.purchasePrice?.toString() ?: ""
@@ -135,14 +137,14 @@ fun EditItemScreen(
                             scope.launch {
                                 val updatedItem = currentItem.copy(
                                     name = name,
-                                    category = category,
+                                    categories = categories.toList(),
                                     color = color,
                                     secondaryColor = secondaryColor.ifEmpty { null },
                                     pattern = pattern.ifEmpty { null },
                                     fabricType = fabricType,
                                     size = size,
                                     style = style,
-                                    dressCode = dressCode,
+                                    dressCodes = dressCodes.toList(),
                                     brand = brand.ifEmpty { null },
                                     notes = notes.ifEmpty { null },
                                     purchasePrice = purchasePrice.toDoubleOrNull()
@@ -151,7 +153,7 @@ fun EditItemScreen(
                                 navController.popBackStack()
                             }
                         },
-                        enabled = name.isNotBlank() && size.isNotBlank() && color.isNotBlank()
+                        enabled = name.isNotBlank() && size.isNotBlank() && color.isNotBlank() && dressCodes.isNotEmpty() && categories.isNotEmpty()
                     ) {
                         Icon(Icons.Default.Check, contentDescription = "Save")
                     }
@@ -276,32 +278,29 @@ fun EditItemScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            // Category Dropdown
-            ExposedDropdownMenuBox(
-                expanded = showCategoryMenu,
-                onExpandedChange = { showCategoryMenu = !showCategoryMenu }
-            ) {
-                OutlinedTextField(
-                    value = category.name.replace("_", " "),
-                    onValueChange = { },
-                    readOnly = true,
-                    label = { Text("Category *") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCategoryMenu) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+            // Category Selection
+            Column {
+                Text(
+                    text = "Categories *",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
-                ExposedDropdownMenu(
-                    expanded = showCategoryMenu,
-                    onDismissRequest = { showCategoryMenu = false }
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    ClothingCategory.values().forEach { item ->
-                        DropdownMenuItem(
-                            text = { Text(item.name.replace("_", " ")) },
+                    items(ClothingCategory.values().toList()) { category ->
+                        FilterChip(
+                            selected = category in categories,
                             onClick = {
-                                category = item
-                                showCategoryMenu = false
-                            }
+                                categories = if (category in categories) {
+                                    categories - category
+                                } else {
+                                    categories + category
+                                }
+                            },
+                            label = { Text(category.displayName) }
                         )
                     }
                 }
@@ -435,32 +434,31 @@ fun EditItemScreen(
                 }
             }
             
-            // Dress Code Dropdown
-            ExposedDropdownMenuBox(
-                expanded = showDressCodeMenu,
-                onExpandedChange = { showDressCodeMenu = !showDressCodeMenu }
+            // Dress Codes Selection
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedTextField(
-                    value = dressCode.name.replace("_", " "),
-                    onValueChange = { },
-                    readOnly = true,
-                    label = { Text("Dress Code *") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showDressCodeMenu) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+                Text(
+                    text = "Dress Codes *",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                ExposedDropdownMenu(
-                    expanded = showDressCodeMenu,
-                    onDismissRequest = { showDressCodeMenu = false }
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    DressCode.values().forEach { item ->
-                        DropdownMenuItem(
-                            text = { Text(item.name.replace("_", " ")) },
+                    items(DressCode.values().toList()) { dressCode ->
+                        FilterChip(
+                            selected = dressCode in dressCodes,
                             onClick = {
-                                dressCode = item
-                                showDressCodeMenu = false
-                            }
+                                dressCodes = if (dressCode in dressCodes) {
+                                    dressCodes - dressCode
+                                } else {
+                                    dressCodes + dressCode
+                                }
+                            },
+                            label = { Text(dressCode.name.replace("_", " ")) }
                         )
                     }
                 }

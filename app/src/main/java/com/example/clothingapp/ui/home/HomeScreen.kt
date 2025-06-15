@@ -2,8 +2,8 @@ package com.example.clothingapp.ui.home
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,14 +25,6 @@ fun HomeScreen(navController: NavController) {
                 )
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate("camera") },
-                containerColor = MaterialTheme.colorScheme.secondary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Clothing")
-            }
-        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -72,7 +64,7 @@ fun HomeScreen(navController: NavController) {
             
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { navController.navigate("camera") }
+                onClick = { navController.navigate("outfits") }
             ) {
                 Column(
                     modifier = Modifier
@@ -80,12 +72,22 @@ fun HomeScreen(navController: NavController) {
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.List,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                        Text(
+                            text = "My Outfits",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
                     Text(
-                        text = "Add New Item",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text(
-                        text = "Take a photo and categorize",
+                        text = "View your saved outfits",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
