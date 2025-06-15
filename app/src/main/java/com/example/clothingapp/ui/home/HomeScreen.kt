@@ -94,7 +94,7 @@ fun HomeScreen(navController: NavController) {
             
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { /* TODO: Navigate to favorites */ }
+                onClick = { navController.navigate("favorites") }
             ) {
                 Column(
                     modifier = Modifier

@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +25,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.clothingapp.data.*
 import com.example.clothingapp.utils.ColorExtractor
+import com.example.clothingapp.ui.components.ColorPickerDialog
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +58,8 @@ fun AddItemScreen(
     var showFabricMenu by remember { mutableStateOf(false) }
     var showStyleMenu by remember { mutableStateOf(false) }
     var showDressCodeMenu by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    var pickingForSecondary by remember { mutableStateOf(false) }
     
     Scaffold(
         topBar = {
@@ -96,6 +100,21 @@ fun AddItemScreen(
             )
         }
     ) { innerPadding ->
+        // Show color picker dialog
+        if (showColorPicker) {
+            ColorPickerDialog(
+                imageUri = imageUri,
+                onColorSelected = { colorName ->
+                    if (pickingForSecondary) {
+                        secondaryColor = colorName
+                    } else {
+                        color = colorName
+                    }
+                },
+                onDismiss = { showColorPicker = false }
+            )
+        }
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -243,13 +262,33 @@ fun AddItemScreen(
                     value = color,
                     onValueChange = { color = it },
                     label = { Text("Primary Color *") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                pickingForSecondary = false
+                                showColorPicker = true
+                            }
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = "Pick color")
+                        }
+                    }
                 )
                 OutlinedTextField(
                     value = secondaryColor,
                     onValueChange = { secondaryColor = it },
                     label = { Text("Secondary Color") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                pickingForSecondary = true
+                                showColorPicker = true
+                            }
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = "Pick color")
+                        }
+                    }
                 )
             }
             

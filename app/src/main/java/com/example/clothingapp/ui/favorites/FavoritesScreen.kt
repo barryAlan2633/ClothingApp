@@ -1,15 +1,13 @@
-package com.example.clothingapp.ui.wardrobe
+package com.example.clothingapp.ui.favorites
 
 import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,26 +18,24 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.clothingapp.data.ClothingItem
 import com.example.clothingapp.ui.components.ClothingImageCard
+import com.example.clothingapp.ui.wardrobe.WardrobeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WardrobeScreen(
+fun FavoritesScreen(
     navController: NavController,
     viewModel: WardrobeViewModel
 ) {
     val clothingItems by viewModel.clothingItems.collectAsState()
+    val favoriteItems = clothingItems.filter { it.isFavorite }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Wardrobe") },
-                actions = {
-                    IconButton(onClick = { navController.navigate("favorites") }) {
-                        Icon(
-                            Icons.Default.Favorite,
-                            contentDescription = "View Favorites",
-                            tint = MaterialTheme.colorScheme.error
-                        )
+                title = { Text("Favorites") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -47,16 +43,9 @@ fun WardrobeScreen(
                     titleContentColor = MaterialTheme.colorScheme.primary
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate("camera") }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Item")
-            }
         }
     ) { innerPadding ->
-        if (clothingItems.isEmpty()) {
+        if (favoriteItems.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -68,11 +57,16 @@ fun WardrobeScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        "Your wardrobe is empty",
+                        "No favorite items yet",
                         style = MaterialTheme.typography.titleLarge
                     )
-                    Button(onClick = { navController.navigate("camera") }) {
-                        Text("Add Your First Item")
+                    Text(
+                        "Tap the heart icon on items in your wardrobe to add them to favorites",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Button(onClick = { navController.popBackStack() }) {
+                        Text("Browse Wardrobe")
                     }
                 }
             }
@@ -86,8 +80,8 @@ fun WardrobeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(clothingItems) { item ->
-                    ClothingGridItem(
+                items(favoriteItems) { item ->
+                    FavoriteGridItem(
                         item = item,
                         onItemClick = { navController.navigate("item_detail/${item.id}") },
                         onFavoriteClick = { viewModel.toggleFavorite(item) }
@@ -99,7 +93,7 @@ fun WardrobeScreen(
 }
 
 @Composable
-fun ClothingGridItem(
+fun FavoriteGridItem(
     item: ClothingItem,
     onItemClick: () -> Unit,
     onFavoriteClick: () -> Unit
@@ -123,9 +117,9 @@ fun ClothingGridItem(
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
                     Icon(
-                        imageVector = if (item.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = if (item.isFavorite) "Remove from favorites" else "Add to favorites",
-                        tint = if (item.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Remove from favorites",
+                        tint = MaterialTheme.colorScheme.error
                     )
                 }
             }

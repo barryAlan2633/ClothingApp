@@ -29,6 +29,7 @@ import com.example.clothingapp.ui.detail.ItemDetailViewModel
 import com.example.clothingapp.ui.edit.EditItemScreen
 import com.example.clothingapp.ui.edit.EditItemViewModel
 import com.example.clothingapp.ui.crop.CropScreen
+import com.example.clothingapp.ui.favorites.FavoritesScreen
 
 @Composable
 fun ClothingApp() {
@@ -135,6 +136,18 @@ fun ClothingApp() {
                     }
                 }
             )
+        }
+        
+        composable("favorites") {
+            val wardrobeViewModel: WardrobeViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return WardrobeViewModel(repository) as T
+                    }
+                }
+            )
+            FavoritesScreen(navController, wardrobeViewModel)
         }
     }
 }
