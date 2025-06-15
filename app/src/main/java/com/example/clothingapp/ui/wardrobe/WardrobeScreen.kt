@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.clothingapp.data.ClothingItem
+import com.example.clothingapp.ui.components.ClothingImageCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,7 +101,7 @@ fun ClothingGridItem(
     ) {
         Column {
             Box {
-                Image(
+                ClothingImageCard(
                     painter = rememberAsyncImagePainter(Uri.parse(item.imageUri)),
                     contentDescription = item.name,
                     modifier = Modifier

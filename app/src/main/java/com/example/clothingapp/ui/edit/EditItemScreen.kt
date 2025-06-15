@@ -2,6 +2,7 @@ package com.example.clothingapp.ui.edit
 
 import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,6 +23,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.clothingapp.data.*
 import com.example.clothingapp.ui.additem.ColorChip
 import com.example.clothingapp.utils.ColorExtractor
+import com.example.clothingapp.ui.components.FullScreenImageViewer
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,6 +74,7 @@ fun EditItemScreen(
     
     var isExtractingColors by remember { mutableStateOf(false) }
     var extractedColors by remember { mutableStateOf<com.example.clothingapp.utils.ExtractedColors?>(null) }
+    var showFullScreenImage by remember { mutableStateOf(false) }
     
     // Update state when item changes
     LaunchedEffect(currentItem) {
@@ -87,6 +90,15 @@ fun EditItemScreen(
         brand = currentItem.brand ?: ""
         notes = currentItem.notes ?: ""
         purchasePrice = currentItem.purchasePrice?.toString() ?: ""
+    }
+    
+    // Show full screen image if requested
+    if (showFullScreenImage) {
+        FullScreenImageViewer(
+            imageUri = currentItem.imageUri,
+            onClose = { showFullScreenImage = false }
+        )
+        return
     }
     
     Scaffold(
@@ -140,18 +152,37 @@ fun EditItemScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Image Preview
+            // Image Preview (clickable for full screen)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
+                    .clickable { showFullScreenImage = true }
             ) {
-                Image(
-                    painter = rememberAsyncImagePainter(Uri.parse(currentItem.imageUri)),
-                    contentDescription = "Item image",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                Box {
+                    Image(
+                        painter = rememberAsyncImagePainter(Uri.parse(currentItem.imageUri)),
+                        contentDescription = "Item image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    
+                    // Hint overlay
+                    Card(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                        )
+                    ) {
+                        Text(
+                            text = "Tap to view full size",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                }
             }
             
             // Color Extraction Section

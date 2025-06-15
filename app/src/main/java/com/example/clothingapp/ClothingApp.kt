@@ -131,7 +131,7 @@ fun ClothingApp() {
                 imageUri = imageUri,
                 onImageCropped = { croppedUri ->
                     navController.navigate("add_item/${Uri.encode(croppedUri)}") {
-                        popUpTo("crop/{imageUri}") { inclusive = true }
+                        popUpTo("camera") { inclusive = false }
                     }
                 }
             )

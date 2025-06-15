@@ -87,6 +87,9 @@ dependencies {
     // Color extraction
     implementation("androidx.palette:palette-ktx:1.0.0")
     
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

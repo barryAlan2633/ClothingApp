@@ -43,6 +43,7 @@ fun AddItemScreen(
     var secondaryColor by remember { mutableStateOf("") }
     var isExtractingColors by remember { mutableStateOf(false) }
     var extractedColors by remember { mutableStateOf<com.example.clothingapp.utils.ExtractedColors?>(null) }
+    var processedImageUri by remember { mutableStateOf(imageUri) }
     var pattern by remember { mutableStateOf("") }
     var fabricType by remember { mutableStateOf(FabricType.COTTON) }
     var size by remember { mutableStateOf("") }

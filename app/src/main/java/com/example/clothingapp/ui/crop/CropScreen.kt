@@ -26,10 +26,12 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import android.widget.Toast
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.clothingapp.utils.CropRect
 import com.example.clothingapp.utils.ImageCropper
 import kotlinx.coroutines.launch
@@ -80,20 +82,38 @@ fun CropScreen(
                     IconButton(
                         onClick = {
                             scope.launch {
+                                // Validate crop rectangle
+                                val rect = CropRect(topLeft, topRight, bottomLeft, bottomRight).toRectangle()
+                                if (rect.width() <= 0 || rect.height() <= 0) {
+                                    Toast.makeText(context, "Invalid crop area. Please adjust the corners.", Toast.LENGTH_SHORT).show()
+                                    return@launch
+                                }
+                                
                                 isCropping = true
                                 val cropRect = CropRect(topLeft, topRight, bottomLeft, bottomRight)
-                                val croppedUri = ImageCropper.cropImage(
-                                    context = context,
-                                    imageUri = Uri.parse(imageUri),
-                                    cropRect = cropRect,
-                                    imageWidth = imageSize.width,
-                                    imageHeight = imageSize.height
-                                )
-                                isCropping = false
-                                
-                                if (croppedUri != null) {
-                                    onImageCropped(croppedUri.toString())
-                                    navController.popBackStack()
+                                try {
+                                    val croppedUri = ImageCropper.cropImage(
+                                        context = context,
+                                        imageUri = Uri.parse(imageUri),
+                                        cropRect = cropRect,
+                                        imageWidth = imageSize.width,
+                                        imageHeight = imageSize.height
+                                    )
+                                    isCropping = false
+                                    
+                                    if (croppedUri != null) {
+                                        Toast.makeText(context, "Image cropped successfully", Toast.LENGTH_SHORT).show()
+                                        onImageCropped(croppedUri.toString())
+                                    } else {
+                                        // Cropping failed, show error or fallback
+                                        Toast.makeText(context, "Cropping failed", Toast.LENGTH_SHORT).show()
+                                        println("Cropping failed: returned null")
+                                    }
+                                } catch (e: Exception) {
+                                    isCropping = false
+                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                                    println("Cropping error: ${e.message}")
+                                    e.printStackTrace()
                                 }
                             }
                         },
@@ -126,14 +146,19 @@ fun CropScreen(
             Box {
                 // Background image
                 Image(
-                    painter = rememberAsyncImagePainter(Uri.parse(imageUri)),
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(context)
+                            .data(Uri.parse(imageUri))
+                            .size(coil.size.Size.ORIGINAL)
+                            .build()
+                    ),
                     contentDescription = "Image to crop",
                     modifier = Modifier
                         .fillMaxSize()
                         .onGloballyPositioned { layoutCoordinates ->
                             imageSize = layoutCoordinates.size
                         },
-                    contentScale = ContentScale.Fit
+                    contentScale = ContentScale.Inside
                 )
                 
                 // Crop overlay

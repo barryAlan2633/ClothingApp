@@ -30,6 +30,13 @@ data class ClothingItem(
 )
 
 enum class ClothingCategory {
+                            SHIRT,
+    PANTS,
+    JEANS,
+    JACKET,
+    HAT,
+    SHORTS,
+    SKIRT,
     SHOES,
     TOP,
     BOTTOM,

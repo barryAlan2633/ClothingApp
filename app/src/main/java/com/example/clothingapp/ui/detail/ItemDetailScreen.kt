@@ -2,6 +2,7 @@ package com.example.clothingapp.ui.detail
 
 import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.clothingapp.data.*
+import com.example.clothingapp.ui.components.FullScreenImageViewer
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,6 +35,7 @@ fun ItemDetailScreen(
 ) {
     val item by viewModel.item.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showFullScreenImage by remember { mutableStateOf(false) }
     
     LaunchedEffect(itemId) {
         viewModel.loadItem(itemId)
@@ -49,6 +52,15 @@ fun ItemDetailScreen(
     }
     
     val currentItem = item!!
+    
+    // Show full screen image if requested
+    if (showFullScreenImage) {
+        FullScreenImageViewer(
+            imageUri = currentItem.imageUri,
+            onClose = { showFullScreenImage = false }
+        )
+        return
+    }
     val scrollState = rememberScrollState()
     
     Scaffold(
@@ -100,18 +112,37 @@ fun ItemDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Image
+            // Image (clickable for full screen)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp)
+                    .clickable { showFullScreenImage = true }
             ) {
-                Image(
-                    painter = rememberAsyncImagePainter(Uri.parse(currentItem.imageUri)),
-                    contentDescription = currentItem.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                Box {
+                    Image(
+                        painter = rememberAsyncImagePainter(Uri.parse(currentItem.imageUri)),
+                        contentDescription = currentItem.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    
+                    // Hint overlay
+                    Card(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                        )
+                    ) {
+                        Text(
+                            text = "Tap to view full size",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                }
             }
             
             // Basic Info Card
