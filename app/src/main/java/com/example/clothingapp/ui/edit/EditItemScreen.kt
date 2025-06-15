@@ -8,15 +8,20 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.clothingapp.data.*
+import com.example.clothingapp.ui.additem.ColorChip
+import com.example.clothingapp.utils.ColorExtractor
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,6 +34,7 @@ fun EditItemScreen(
     val item by viewModel.item.collectAsState()
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     
     LaunchedEffect(itemId) {
         viewModel.loadItem(itemId)
@@ -63,6 +69,9 @@ fun EditItemScreen(
     var showFabricMenu by remember { mutableStateOf(false) }
     var showStyleMenu by remember { mutableStateOf(false) }
     var showDressCodeMenu by remember { mutableStateOf(false) }
+    
+    var isExtractingColors by remember { mutableStateOf(false) }
+    var extractedColors by remember { mutableStateOf<com.example.clothingapp.utils.ExtractedColors?>(null) }
     
     // Update state when item changes
     LaunchedEffect(currentItem) {
@@ -143,6 +152,70 @@ fun EditItemScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
+            }
+            
+            // Color Extraction Section
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Re-extract Colors from Image",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    isExtractingColors = true
+                                    extractedColors = ColorExtractor.extractColorsFromImage(context, Uri.parse(currentItem.imageUri))
+                                    extractedColors?.let { colors ->
+                                        color = colors.primary
+                                        secondaryColor = colors.secondary ?: ""
+                                    }
+                                    isExtractingColors = false
+                                }
+                            },
+                            enabled = !isExtractingColors
+                        ) {
+                            if (isExtractingColors) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(Icons.Default.Refresh, contentDescription = "Re-extract Colors")
+                            }
+                        }
+                    }
+                    
+                    if (extractedColors != null) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Detected:")
+                            ColorChip(
+                                color = extractedColors!!.primary,
+                                label = "Primary"
+                            )
+                            extractedColors!!.secondary?.let { secondaryColorName ->
+                                ColorChip(
+                                    color = secondaryColorName,
+                                    label = "Secondary"
+                                )
+                            }
+                        }
+                    }
+                }
             }
             
             // Name Input
