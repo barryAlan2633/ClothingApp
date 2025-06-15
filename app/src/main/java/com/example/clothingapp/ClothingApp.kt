@@ -28,6 +28,7 @@ import com.example.clothingapp.ui.detail.ItemDetailScreen
 import com.example.clothingapp.ui.detail.ItemDetailViewModel
 import com.example.clothingapp.ui.edit.EditItemScreen
 import com.example.clothingapp.ui.edit.EditItemViewModel
+import com.example.clothingapp.ui.crop.CropScreen
 
 @Composable
 fun ClothingApp() {
@@ -117,6 +118,22 @@ fun ClothingApp() {
                 navController = navController,
                 viewModel = editViewModel,
                 itemId = itemId
+            )
+        }
+        
+        composable(
+            "crop/{imageUri}",
+            arguments = listOf(navArgument("imageUri") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
+            CropScreen(
+                navController = navController,
+                imageUri = imageUri,
+                onImageCropped = { croppedUri ->
+                    navController.navigate("add_item/${Uri.encode(croppedUri)}") {
+                        popUpTo("crop/{imageUri}") { inclusive = true }
+                    }
+                }
             )
         }
     }

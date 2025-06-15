@@ -45,7 +45,7 @@ fun CameraScreen(
             CameraView(
                 onImageCaptured = { uri ->
                     onImageCaptured(uri)
-                    navController.navigate("add_item/${Uri.encode(uri.toString())}")
+                    navController.navigate("crop/${Uri.encode(uri.toString())}")
                 },
                 onError = { }
             )
