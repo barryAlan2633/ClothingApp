@@ -187,6 +187,12 @@ fun CropOverlay(
     val handleRadius = 12.dp
     val handleRadiusPx = with(density) { handleRadius.toPx() }
     
+    // Track phantom positions
+    var phantomTopLeft by remember { mutableStateOf<Offset?>(null) }
+    var phantomTopRight by remember { mutableStateOf<Offset?>(null) }
+    var phantomBottomLeft by remember { mutableStateOf<Offset?>(null) }
+    var phantomBottomRight by remember { mutableStateOf<Offset?>(null) }
+    
     Box(
         modifier = Modifier
             .width(with(density) { imageSize.width.toDp() })
@@ -219,11 +225,46 @@ fun CropOverlay(
             )
         }
         
+        // Phantom handles
+        phantomTopLeft?.let { pos ->
+            PhantomHandle(
+                modifier = Modifier.offset(
+                    x = with(density) { (pos.x - handleRadiusPx).toDp() },
+                    y = with(density) { (pos.y - handleRadiusPx).toDp() }
+                )
+            )
+        }
+        phantomTopRight?.let { pos ->
+            PhantomHandle(
+                modifier = Modifier.offset(
+                    x = with(density) { (pos.x - handleRadiusPx).toDp() },
+                    y = with(density) { (pos.y - handleRadiusPx).toDp() }
+                )
+            )
+        }
+        phantomBottomLeft?.let { pos ->
+            PhantomHandle(
+                modifier = Modifier.offset(
+                    x = with(density) { (pos.x - handleRadiusPx).toDp() },
+                    y = with(density) { (pos.y - handleRadiusPx).toDp() }
+                )
+            )
+        }
+        phantomBottomRight?.let { pos ->
+            PhantomHandle(
+                modifier = Modifier.offset(
+                    x = with(density) { (pos.x - handleRadiusPx).toDp() },
+                    y = with(density) { (pos.y - handleRadiusPx).toDp() }
+                )
+            )
+        }
+        
         // Draggable corner handles
         DraggableHandle(
             position = topLeft,
             imageSize = imageSize,
             onPositionChange = onTopLeftChange,
+            onPhantomPositionChange = { phantomTopLeft = it },
             modifier = Modifier.offset(
                 x = with(density) { (topLeft.x - handleRadiusPx).toDp() },
                 y = with(density) { (topLeft.y - handleRadiusPx).toDp() }
@@ -234,6 +275,7 @@ fun CropOverlay(
             position = topRight,
             imageSize = imageSize,
             onPositionChange = onTopRightChange,
+            onPhantomPositionChange = { phantomTopRight = it },
             modifier = Modifier.offset(
                 x = with(density) { (topRight.x - handleRadiusPx).toDp() },
                 y = with(density) { (topRight.y - handleRadiusPx).toDp() }
@@ -244,6 +286,7 @@ fun CropOverlay(
             position = bottomLeft,
             imageSize = imageSize,
             onPositionChange = onBottomLeftChange,
+            onPhantomPositionChange = { phantomBottomLeft = it },
             modifier = Modifier.offset(
                 x = with(density) { (bottomLeft.x - handleRadiusPx).toDp() },
                 y = with(density) { (bottomLeft.y - handleRadiusPx).toDp() }
@@ -254,6 +297,7 @@ fun CropOverlay(
             position = bottomRight,
             imageSize = imageSize,
             onPositionChange = onBottomRightChange,
+            onPhantomPositionChange = { phantomBottomRight = it },
             modifier = Modifier.offset(
                 x = with(density) { (bottomRight.x - handleRadiusPx).toDp() },
                 y = with(density) { (bottomRight.y - handleRadiusPx).toDp() }
@@ -263,83 +307,78 @@ fun CropOverlay(
 }
 
 @Composable
+fun PhantomHandle(
+    modifier: Modifier = Modifier
+) {
+    val handleSize = 24.dp
+    
+    Box(
+        modifier = modifier
+            .size(handleSize)
+            .clip(CircleShape)
+            .background(Color.White.copy(alpha = 0.5f))
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                .align(Alignment.Center)
+        )
+    }
+}
+
+@Composable
 fun DraggableHandle(
     position: Offset,
     imageSize: IntSize,
     onPositionChange: (Offset) -> Unit,
+    onPhantomPositionChange: ((Offset?) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val handleSize = 24.dp
-    val density = LocalDensity.current
     var isDragging by remember { mutableStateOf(false) }
-    var phantomPosition by remember { mutableStateOf(position) }
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
     
-    // Update phantom position when actual position changes
-    LaunchedEffect(position) {
-        if (!isDragging) {
-            phantomPosition = position
-        }
-    }
-    
-    Box(modifier = modifier) {
-        // Phantom handle (shows during drag)
-        if (isDragging && phantomPosition != position) {
-            Box(
-                modifier = Modifier
-                    .offset(
-                        x = with(density) { (phantomPosition.x - position.x).toDp() },
-                        y = with(density) { (phantomPosition.y - position.y).toDp() }
-                    )
-                    .size(handleSize)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.5f))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                        .align(Alignment.Center)
+    Box(
+        modifier = modifier
+            .size(handleSize)
+            .clip(CircleShape)
+            .background(if (isDragging) Color.White.copy(alpha = 0.6f) else Color.White)
+            .pointerInput(position) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        isDragging = true
+                        dragOffset = Offset.Zero
+                        onPhantomPositionChange?.invoke(position)
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        val finalPosition = Offset(
+                            x = (position.x + dragOffset.x).coerceIn(0f, imageSize.width.toFloat()),
+                            y = (position.y + dragOffset.y).coerceIn(0f, imageSize.height.toFloat())
+                        )
+                        onPositionChange(finalPosition)
+                        onPhantomPositionChange?.invoke(null)
+                        dragOffset = Offset.Zero
+                    },
+                    onDrag = { change, _ ->
+                        dragOffset += Offset(change.position.x - change.previousPosition.x, change.position.y - change.previousPosition.y)
+                        val phantomPosition = Offset(
+                            x = (position.x + dragOffset.x).coerceIn(0f, imageSize.width.toFloat()),
+                            y = (position.y + dragOffset.y).coerceIn(0f, imageSize.height.toFloat())
+                        )
+                        onPhantomPositionChange?.invoke(phantomPosition)
+                    }
                 )
             }
-        }
-        
-        // Actual handle
+    ) {
         Box(
             modifier = Modifier
-                .size(handleSize)
+                .size(12.dp)
                 .clip(CircleShape)
-                .background(if (isDragging) Color.White.copy(alpha = 0.6f) else Color.White)
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = { offset ->
-                            isDragging = true
-                            dragOffset = Offset.Zero
-                            phantomPosition = position
-                        },
-                        onDragEnd = {
-                            isDragging = false
-                            onPositionChange(phantomPosition)
-                            dragOffset = Offset.Zero
-                        },
-                        onDrag = { change, _ ->
-                            dragOffset += Offset(change.position.x - change.previousPosition.x, change.position.y - change.previousPosition.y)
-                            phantomPosition = Offset(
-                                x = (position.x + dragOffset.x).coerceIn(0f, imageSize.width.toFloat()),
-                                y = (position.y + dragOffset.y).coerceIn(0f, imageSize.height.toFloat())
-                            )
-                        }
-                    )
-                }
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .align(Alignment.Center)
-            )
-        }
+                .background(MaterialTheme.colorScheme.primary)
+                .align(Alignment.Center)
+        )
     }
 }
