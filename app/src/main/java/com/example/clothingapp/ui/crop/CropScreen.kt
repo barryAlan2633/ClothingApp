@@ -270,29 +270,76 @@ fun DraggableHandle(
     modifier: Modifier = Modifier
 ) {
     val handleSize = 24.dp
+    val density = LocalDensity.current
+    var isDragging by remember { mutableStateOf(false) }
+    var phantomPosition by remember { mutableStateOf(position) }
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
     
-    Box(
-        modifier = modifier
-            .size(handleSize)
-            .clip(CircleShape)
-            .background(Color.White)
-            .pointerInput(position) {
-                detectDragGestures { _, dragAmount ->
-                    onPositionChange(
-                        Offset(
-                            x = (position.x + dragAmount.x).coerceIn(0f, imageSize.width.toFloat()),
-                            y = (position.y + dragAmount.y).coerceIn(0f, imageSize.height.toFloat())
-                        )
+    // Update phantom position when actual position changes
+    LaunchedEffect(position) {
+        if (!isDragging) {
+            phantomPosition = position
+        }
+    }
+    
+    Box(modifier = modifier) {
+        // Phantom handle (shows during drag)
+        if (isDragging && phantomPosition != position) {
+            Box(
+                modifier = Modifier
+                    .offset(
+                        x = with(density) { (phantomPosition.x - position.x).toDp() },
+                        y = with(density) { (phantomPosition.y - position.y).toDp() }
                     )
-                }
+                    .size(handleSize)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.5f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                        .align(Alignment.Center)
+                )
             }
-    ) {
+        }
+        
+        // Actual handle
         Box(
             modifier = Modifier
-                .size(12.dp)
+                .size(handleSize)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-                .align(Alignment.Center)
-        )
+                .background(if (isDragging) Color.White.copy(alpha = 0.6f) else Color.White)
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            isDragging = true
+                            dragOffset = Offset.Zero
+                            phantomPosition = position
+                        },
+                        onDragEnd = {
+                            isDragging = false
+                            onPositionChange(phantomPosition)
+                            dragOffset = Offset.Zero
+                        },
+                        onDrag = { change, _ ->
+                            dragOffset += Offset(change.position.x - change.previousPosition.x, change.position.y - change.previousPosition.y)
+                            phantomPosition = Offset(
+                                x = (position.x + dragOffset.x).coerceIn(0f, imageSize.width.toFloat()),
+                                y = (position.y + dragOffset.y).coerceIn(0f, imageSize.height.toFloat())
+                            )
+                        }
+                    )
+                }
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .align(Alignment.Center)
+            )
+        }
     }
 }
