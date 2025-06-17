@@ -69,6 +69,14 @@ fun OutfitDetailScreen(
                 },
                 actions = {
                     IconButton(
+                        onClick = { navController.navigate("outfit_editor/${outfitId}") }
+                    ) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit Outfit"
+                        )
+                    }
+                    IconButton(
                         onClick = { viewModel.toggleFavorite() }
                     ) {
                         Icon(
@@ -113,6 +121,7 @@ fun OutfitDetailScreen(
                 onItemClick = { item ->
                     navController.navigate("item_detail/${item.id}")
                 },
+                useAspectRatio = false,
                 modifier = Modifier.fillMaxWidth()
             )
             

@@ -249,19 +249,111 @@ fun OutfitGridItem(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            // Character-style outfit preview
-            CharacterOutfitLayout(
-                hats = outfitWithItems.hats,
-                tops = outfitWithItems.tops,
-                bottoms = outfitWithItems.bottoms,
-                footwear = outfitWithItems.footwear,
-                jewelry = outfitWithItems.jewelry,
-                accessories = outfitWithItems.accessories,
-                isCompact = true,
+            // Simple outfit preview showing only tops and bottoms
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-            )
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Top section
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (outfitWithItems.tops.isNotEmpty()) {
+                            outfitWithItems.tops.take(2).forEach { top ->
+                                Card(
+                                    modifier = Modifier.size(60.dp)
+                                ) {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(Uri.parse(top.imageUri)),
+                                        contentDescription = top.name,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
+                            if (outfitWithItems.tops.size > 2) {
+                                Text(
+                                    text = "+${outfitWithItems.tops.size - 2}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            Card(
+                                modifier = Modifier.size(60.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Top",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Bottom section
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (outfitWithItems.bottoms.isNotEmpty()) {
+                            outfitWithItems.bottoms.take(2).forEach { bottom ->
+                                Card(
+                                    modifier = Modifier.size(60.dp)
+                                ) {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(Uri.parse(bottom.imageUri)),
+                                        contentDescription = bottom.name,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
+                            if (outfitWithItems.bottoms.size > 2) {
+                                Text(
+                                    text = "+${outfitWithItems.bottoms.size - 2}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            Card(
+                                modifier = Modifier.size(60.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Bottom",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             
             // Outfit info
             Column(

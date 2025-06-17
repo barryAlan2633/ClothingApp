@@ -31,4 +31,7 @@ interface OutfitDao {
     
     @Query("UPDATE outfits SET lastWorn = :date, wearCount = wearCount + 1 WHERE id = :id")
     suspend fun updateWearInfo(id: Int, date: java.util.Date)
+    
+    @Query("SELECT * FROM outfits WHERE id = :id")
+    fun getOutfitWithItems(id: Int): Flow<Outfit?>
 }

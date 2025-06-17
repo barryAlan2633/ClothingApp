@@ -42,6 +42,7 @@ import com.example.clothingapp.ui.outfits.OutfitsScreen
 import com.example.clothingapp.ui.outfits.OutfitsViewModel
 import com.example.clothingapp.ui.outfits.OutfitDetailScreen
 import com.example.clothingapp.ui.outfits.OutfitDetailViewModel
+import com.example.clothingapp.ui.outfits.OutfitEditorScreen
 import kotlinx.coroutines.flow.first
 
 @Composable
@@ -216,6 +217,26 @@ fun ClothingApp() {
             OutfitDetailScreen(
                 navController = navController,
                 viewModel = outfitDetailViewModel,
+                outfitId = outfitId
+            )
+        }
+        
+        composable(
+            "outfit_editor/{outfitId}",
+            arguments = listOf(navArgument("outfitId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val outfitId = backStackEntry.arguments?.getInt("outfitId") ?: 0
+            val outfitCreatorViewModel: OutfitCreatorViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return OutfitCreatorViewModel(database.clothingDao(), database.outfitDao()) as T
+                    }
+                }
+            )
+            OutfitEditorScreen(
+                navController = navController,
+                viewModel = outfitCreatorViewModel,
                 outfitId = outfitId
             )
         }

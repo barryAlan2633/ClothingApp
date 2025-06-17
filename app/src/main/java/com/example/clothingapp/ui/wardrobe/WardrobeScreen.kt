@@ -256,7 +256,9 @@ fun WardrobeScreen(
                                 categoryName = mainCategory.displayName,
                                 items = items,
                                 onItemClick = { item -> navController.navigate("item_detail/${item.id}") },
-                                onFavoriteClick = { item -> viewModel.toggleFavorite(item) }
+                                onFavoriteClick = { item -> viewModel.toggleFavorite(item) },
+                                onDirtyStatusChange = { item, isDirty -> viewModel.updateDirtyStatus(item, isDirty) },
+                                onRepairStatusChange = { item, needsRepair -> viewModel.updateRepairStatus(item, needsRepair) }
                             )
                         }
                     }
@@ -319,7 +321,9 @@ fun CategorySection(
     categoryName: String,
     items: List<ClothingItem>,
     onItemClick: (ClothingItem) -> Unit,
-    onFavoriteClick: (ClothingItem) -> Unit
+    onFavoriteClick: (ClothingItem) -> Unit,
+    onDirtyStatusChange: (ClothingItem, Boolean) -> Unit,
+    onRepairStatusChange: (ClothingItem, Boolean) -> Unit
 ) {
     Column {
         Text(
@@ -340,7 +344,9 @@ fun CategorySection(
                 ClothingGridItem(
                     item = item,
                     onItemClick = { onItemClick(item) },
-                    onFavoriteClick = { onFavoriteClick(item) }
+                    onFavoriteClick = { onFavoriteClick(item) },
+                    onDirtyStatusChange = { isDirty -> onDirtyStatusChange(item, isDirty) },
+                    onRepairStatusChange = { needsRepair -> onRepairStatusChange(item, needsRepair) }
                 )
             }
         }
@@ -351,7 +357,9 @@ fun CategorySection(
 fun ClothingGridItem(
     item: ClothingItem,
     onItemClick: () -> Unit,
-    onFavoriteClick: () -> Unit
+    onFavoriteClick: () -> Unit,
+    onDirtyStatusChange: (Boolean) -> Unit,
+    onRepairStatusChange: (Boolean) -> Unit
 ) {
     Card(
         onClick = onItemClick,
@@ -369,52 +377,59 @@ fun ClothingGridItem(
                 )
                 
                 // Status indicators row at top start
-                if (item.isDirty || item.needsRepair) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Dirty status indicator (always shown)
+                    Card(
+                        onClick = { onDirtyStatusChange(!item.isDirty) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (item.isDirty) 
+                                MaterialTheme.colorScheme.error 
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                        ),
+                        modifier = Modifier.size(32.dp)
                     ) {
-                        if (item.isDirty) {
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ),
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Default.Warning,
-                                        contentDescription = "Dirty",
-                                        modifier = Modifier.size(20.dp),
-                                        tint = MaterialTheme.colorScheme.onError
-                                    )
-                                }
-                            }
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = if (item.isDirty) "Mark as clean" else "Mark as dirty",
+                                modifier = Modifier.size(20.dp),
+                                tint = if (item.isDirty) 
+                                    MaterialTheme.colorScheme.onError 
+                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
                         }
-                        if (item.needsRepair) {
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ),
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Default.Build,
-                                        contentDescription = "Needs Repair",
-                                        modifier = Modifier.size(20.dp),
-                                        tint = MaterialTheme.colorScheme.onError
-                                    )
-                                }
-                            }
+                    }
+                    
+                    // Repair status indicator (always shown)
+                    Card(
+                        onClick = { onRepairStatusChange(!item.needsRepair) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (item.needsRepair) 
+                                MaterialTheme.colorScheme.error 
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                        ),
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Build,
+                                contentDescription = if (item.needsRepair) "Mark as repaired" else "Mark as needs repair",
+                                modifier = Modifier.size(20.dp),
+                                tint = if (item.needsRepair) 
+                                    MaterialTheme.colorScheme.onError 
+                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
                         }
                     }
                 }

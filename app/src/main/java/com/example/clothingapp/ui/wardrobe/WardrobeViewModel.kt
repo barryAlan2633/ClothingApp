@@ -25,4 +25,18 @@ class WardrobeViewModel(
             repository.toggleFavorite(item.id, !item.isFavorite)
         }
     }
+    
+    fun updateDirtyStatus(item: ClothingItem, isDirty: Boolean) {
+        viewModelScope.launch {
+            val updatedItem = item.copy(isDirty = isDirty)
+            repository.updateItem(updatedItem)
+        }
+    }
+    
+    fun updateRepairStatus(item: ClothingItem, needsRepair: Boolean) {
+        viewModelScope.launch {
+            val updatedItem = item.copy(needsRepair = needsRepair)
+            repository.updateItem(updatedItem)
+        }
+    }
 }
