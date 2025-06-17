@@ -266,9 +266,9 @@ fun FavoriteOutfitItem(
         Column {
             // Character-style outfit preview
             CharacterOutfitLayout(
-                hat = outfitWithItems.hat,
-                top = outfitWithItems.top,
-                bottom = outfitWithItems.bottom,
+                hats = outfitWithItems.hats,
+                tops = outfitWithItems.tops,
+                bottoms = outfitWithItems.bottoms,
                 footwear = outfitWithItems.footwear,
                 jewelry = outfitWithItems.jewelry,
                 accessories = outfitWithItems.accessories,
@@ -294,12 +294,12 @@ fun FavoriteOutfitItem(
                 )
                 
                 // Show if any items need attention
-                val items = listOfNotNull(
-                    outfitWithItems.hat,
-                    outfitWithItems.top, 
-                    outfitWithItems.bottom, 
-                    outfitWithItems.footwear
-                ) + outfitWithItems.jewelry + outfitWithItems.accessories
+                val items = outfitWithItems.hats + 
+                    outfitWithItems.tops + 
+                    outfitWithItems.bottoms + 
+                    outfitWithItems.footwear + 
+                    outfitWithItems.jewelry + 
+                    outfitWithItems.accessories
                 val needsAttention = items.any { it.isDirty || it.needsRepair }
                 if (needsAttention) {
                     Text(

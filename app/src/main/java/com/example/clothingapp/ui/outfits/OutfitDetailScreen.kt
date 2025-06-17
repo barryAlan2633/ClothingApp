@@ -51,12 +51,12 @@ fun OutfitDetailScreen(
     }
     
     val outfit = outfitWithItems!!.outfit
-    val items = listOfNotNull(
-        outfitWithItems!!.hat,
-        outfitWithItems!!.top, 
-        outfitWithItems!!.bottom, 
-        outfitWithItems!!.footwear
-    ) + outfitWithItems!!.jewelry + outfitWithItems!!.accessories
+    val items = outfitWithItems!!.hats + 
+        outfitWithItems!!.tops + 
+        outfitWithItems!!.bottoms + 
+        outfitWithItems!!.footwear + 
+        outfitWithItems!!.jewelry + 
+        outfitWithItems!!.accessories
     
     Scaffold(
         topBar = {
@@ -104,9 +104,9 @@ fun OutfitDetailScreen(
         ) {
             // Character-style Outfit Preview
             CharacterOutfitLayout(
-                hat = outfitWithItems!!.hat,
-                top = outfitWithItems!!.top,
-                bottom = outfitWithItems!!.bottom,
+                hats = outfitWithItems!!.hats,
+                tops = outfitWithItems!!.tops,
+                bottoms = outfitWithItems!!.bottoms,
                 footwear = outfitWithItems!!.footwear,
                 jewelry = outfitWithItems!!.jewelry,
                 accessories = outfitWithItems!!.accessories,

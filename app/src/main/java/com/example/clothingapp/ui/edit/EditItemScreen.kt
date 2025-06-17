@@ -12,6 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,7 +29,6 @@ import com.example.clothingapp.ui.additem.ColorChip
 import com.example.clothingapp.utils.ColorExtractor
 import com.example.clothingapp.ui.components.FullScreenImageViewer
 import com.example.clothingapp.ui.components.ColorPickerDialog
-import androidx.compose.material.icons.filled.Edit
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,6 +71,7 @@ fun EditItemScreen(
     var brand by remember { mutableStateOf(currentItem.brand ?: "") }
     var notes by remember { mutableStateOf(currentItem.notes ?: "") }
     var purchasePrice by remember { mutableStateOf(currentItem.purchasePrice?.toString() ?: "") }
+    var imageUri by remember { mutableStateOf(currentItem.imageUri) }
     
     var showCategoryMenu by remember { mutableStateOf(false) }
     var showFabricMenu by remember { mutableStateOf(false) }
@@ -96,7 +98,9 @@ fun EditItemScreen(
         brand = currentItem.brand ?: ""
         notes = currentItem.notes ?: ""
         purchasePrice = currentItem.purchasePrice?.toString() ?: ""
+        imageUri = currentItem.imageUri
     }
+    
     
     // Show full screen image if requested
     if (showFullScreenImage) {
@@ -137,6 +141,7 @@ fun EditItemScreen(
                             scope.launch {
                                 val updatedItem = currentItem.copy(
                                     name = name,
+                                    imageUri = imageUri,
                                     categories = categories.toList(),
                                     color = color,
                                     secondaryColor = secondaryColor.ifEmpty { null },
@@ -173,37 +178,19 @@ fun EditItemScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Image Preview (clickable for full screen)
+            // Image Preview (read-only)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .aspectRatio(1.5f)
                     .clickable { showFullScreenImage = true }
             ) {
-                Box {
-                    Image(
-                        painter = rememberAsyncImagePainter(Uri.parse(currentItem.imageUri)),
-                        contentDescription = "Item image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
-                    
-                    // Hint overlay
-                    Card(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
-                        )
-                    ) {
-                        Text(
-                            text = "Tap to view full size",
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-                }
+                Image(
+                    painter = rememberAsyncImagePainter(Uri.parse(imageUri)),
+                    contentDescription = currentItem.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
             }
             
             // Color Extraction Section
@@ -323,7 +310,7 @@ fun EditItemScreen(
                                 showColorPicker = true
                             }
                         ) {
-                            Icon(Icons.Default.Edit, contentDescription = "Pick color")
+                            Icon(Icons.Default.Add, contentDescription = "Pick color")
                         }
                     }
                 )
@@ -339,7 +326,7 @@ fun EditItemScreen(
                                 showColorPicker = true
                             }
                         ) {
-                            Icon(Icons.Default.Edit, contentDescription = "Pick color")
+                            Icon(Icons.Default.Add, contentDescription = "Pick color")
                         }
                     }
                 )

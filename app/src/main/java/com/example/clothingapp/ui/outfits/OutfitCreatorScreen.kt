@@ -11,8 +11,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -47,10 +50,10 @@ fun OutfitCreatorScreen(
     
     val allItems by viewModel.allItems.collectAsState()
     
-    var selectedHat by remember { mutableStateOf<ClothingItem?>(null) }
-    var selectedTop by remember { mutableStateOf<ClothingItem?>(null) }
-    var selectedBottom by remember { mutableStateOf<ClothingItem?>(null) }
-    var selectedFootwear by remember { mutableStateOf<ClothingItem?>(null) }
+    var selectedHats by remember { mutableStateOf<List<ClothingItem>>(emptyList()) }
+    var selectedTops by remember { mutableStateOf<List<ClothingItem>>(emptyList()) }
+    var selectedBottoms by remember { mutableStateOf<List<ClothingItem>>(emptyList()) }
+    var selectedFootwear by remember { mutableStateOf<List<ClothingItem>>(emptyList()) }
     var selectedJewelry by remember { mutableStateOf<List<ClothingItem>>(emptyList()) }
     var selectedAccessories by remember { mutableStateOf<List<ClothingItem>>(emptyList()) }
     
@@ -78,7 +81,7 @@ fun OutfitCreatorScreen(
                 title = { Text("Create Outfit") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -87,7 +90,7 @@ fun OutfitCreatorScreen(
                     }
                     IconButton(
                         onClick = { showSaveDialog = true },
-                        enabled = selectedTop != null || selectedBottom != null || selectedFootwear != null || selectedHat != null || selectedJewelry.isNotEmpty() || selectedAccessories.isNotEmpty()
+                        enabled = selectedTops.isNotEmpty() || selectedBottoms.isNotEmpty() || selectedFootwear.isNotEmpty() || selectedHats.isNotEmpty() || selectedJewelry.isNotEmpty() || selectedAccessories.isNotEmpty()
                     ) {
                         Icon(Icons.Default.Check, contentDescription = "Save Outfit")
                     }
@@ -99,9 +102,42 @@ fun OutfitCreatorScreen(
             )
         }
     ) { innerPadding ->
+        val scrollState = rememberScrollState()
+        
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
+            // Scrollable content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.Top
+            ) {
+                // Character outfit layout for selection
+                CharacterOutfitLayout(
+                    hats = selectedHats,
+                    tops = selectedTops,
+                    bottoms = selectedBottoms,
+                    footwear = selectedFootwear,
+                    jewelry = selectedJewelry,
+                    accessories = selectedAccessories,
+                    onSlotClick = { category ->
+                        currentPickerCategory = category
+                        showItemPicker = true
+                    },
+                    useAspectRatio = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                // Add some bottom padding to ensure shoes are visible
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            
+            // Success message overlay
             if (showSuccessMessage) {
                 Card(
                     modifier = Modifier
@@ -110,7 +146,8 @@ fun OutfitCreatorScreen(
                         .align(Alignment.TopCenter),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Text(
                         text = "Outfit saved successfully!",
@@ -121,24 +158,6 @@ fun OutfitCreatorScreen(
                     )
                 }
             }
-            
-            // Character outfit layout for selection
-            CharacterOutfitLayout(
-                hat = selectedHat,
-                top = selectedTop,
-                bottom = selectedBottom,
-                footwear = selectedFootwear,
-                jewelry = selectedJewelry,
-                accessories = selectedAccessories,
-                onSlotClick = { category ->
-                    currentPickerCategory = category
-                    showItemPicker = true
-                },
-                useAspectRatio = false,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = innerPadding.calculateTopPadding(), start = 16.dp, end = 16.dp, bottom = 16.dp)
-            )
         }
     }
     
@@ -165,10 +184,10 @@ fun OutfitCreatorScreen(
                         scope.launch {
                             val success = viewModel.saveOutfit(
                                 name = outfitName.ifEmpty { "Outfit ${System.currentTimeMillis()}" },
-                                hatId = selectedHat?.id,
-                                topId = selectedTop?.id,
-                                bottomId = selectedBottom?.id,
-                                footwearId = selectedFootwear?.id,
+                                hatIds = selectedHats.map { it.id },
+                                topIds = selectedTops.map { it.id },
+                                bottomIds = selectedBottoms.map { it.id },
+                                footwearIds = selectedFootwear.map { it.id },
                                 jewelryIds = selectedJewelry.map { it.id },
                                 accessoryIds = selectedAccessories.map { it.id }
                             )
@@ -179,7 +198,7 @@ fun OutfitCreatorScreen(
                             }
                         }
                     },
-                    enabled = outfitName.isNotBlank() || selectedTop != null || selectedBottom != null || selectedFootwear != null || selectedHat != null || selectedJewelry.isNotEmpty() || selectedAccessories.isNotEmpty()
+                    enabled = outfitName.isNotBlank() || selectedTops.isNotEmpty() || selectedBottoms.isNotEmpty() || selectedFootwear.isNotEmpty() || selectedHats.isNotEmpty() || selectedJewelry.isNotEmpty() || selectedAccessories.isNotEmpty()
                 ) {
                     Text("Save")
                 }
@@ -198,20 +217,20 @@ fun OutfitCreatorScreen(
             category = currentPickerCategory!!,
             allItems = allItems,
             selectedItems = when (currentPickerCategory) {
-                MainCategory.HAT -> listOfNotNull(selectedHat)
-                MainCategory.TOP -> listOfNotNull(selectedTop)
-                MainCategory.BOTTOM -> listOfNotNull(selectedBottom)
-                MainCategory.FOOTWEAR -> listOfNotNull(selectedFootwear)
+                MainCategory.HAT -> selectedHats
+                MainCategory.TOP -> selectedTops
+                MainCategory.BOTTOM -> selectedBottoms
+                MainCategory.FOOTWEAR -> selectedFootwear
                 MainCategory.JEWELRY -> selectedJewelry
                 MainCategory.ACCESSORIES -> selectedAccessories
                 null -> emptyList()
             },
             onItemSelected = { item ->
                 when (currentPickerCategory) {
-                    MainCategory.HAT -> selectedHat = item
-                    MainCategory.TOP -> selectedTop = item
-                    MainCategory.BOTTOM -> selectedBottom = item
-                    MainCategory.FOOTWEAR -> selectedFootwear = item
+                    MainCategory.HAT -> selectedHats = selectedHats + item
+                    MainCategory.TOP -> selectedTops = selectedTops + item
+                    MainCategory.BOTTOM -> selectedBottoms = selectedBottoms + item
+                    MainCategory.FOOTWEAR -> selectedFootwear = selectedFootwear + item
                     MainCategory.JEWELRY -> selectedJewelry = selectedJewelry + item
                     MainCategory.ACCESSORIES -> selectedAccessories = selectedAccessories + item
                     null -> {}
@@ -219,10 +238,10 @@ fun OutfitCreatorScreen(
             },
             onItemRemoved = { item ->
                 when (currentPickerCategory) {
-                    MainCategory.HAT -> selectedHat = null
-                    MainCategory.TOP -> selectedTop = null
-                    MainCategory.BOTTOM -> selectedBottom = null
-                    MainCategory.FOOTWEAR -> selectedFootwear = null
+                    MainCategory.HAT -> selectedHats = selectedHats - item
+                    MainCategory.TOP -> selectedTops = selectedTops - item
+                    MainCategory.BOTTOM -> selectedBottoms = selectedBottoms - item
+                    MainCategory.FOOTWEAR -> selectedFootwear = selectedFootwear - item
                     MainCategory.JEWELRY -> selectedJewelry = selectedJewelry - item
                     MainCategory.ACCESSORIES -> selectedAccessories = selectedAccessories - item
                     null -> {}
@@ -247,7 +266,7 @@ fun ItemPickerDialog(
         item.categories.any { it.mainCategory == category }
     }
     
-    val allowMultiple = category == MainCategory.JEWELRY || category == MainCategory.ACCESSORIES
+    val allowMultiple = true // Allow multiple items for all categories now
     
     Dialog(
         onDismissRequest = onDismiss,
@@ -302,42 +321,39 @@ fun ItemPickerDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Add "None" option for single-select categories
-                        if (!allowMultiple) {
-                            item {
-                                Card(
-                                    onClick = {
-                                        selectedItems.firstOrNull()?.let { onItemRemoved(it) }
-                                        onDismiss()
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(1f)
-                                        .border(
-                                            BorderStroke(
-                                                2.dp,
-                                                if (selectedItems.isEmpty()) MaterialTheme.colorScheme.primary else Color.Transparent
-                                            ),
-                                            RoundedCornerShape(12.dp)
+                        // Add "Clear All" option
+                        item {
+                            Card(
+                                onClick = {
+                                    selectedItems.forEach { onItemRemoved(it) }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .border(
+                                        BorderStroke(
+                                            2.dp,
+                                            if (selectedItems.isEmpty()) MaterialTheme.colorScheme.primary else Color.Transparent
                                         ),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = if (selectedItems.isEmpty()) 
-                                            MaterialTheme.colorScheme.primaryContainer 
-                                        else MaterialTheme.colorScheme.surfaceVariant
-                                    )
+                                        RoundedCornerShape(12.dp)
+                                    ),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (selectedItems.isEmpty()) 
+                                        MaterialTheme.colorScheme.primaryContainer 
+                                    else MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "None",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = if (selectedItems.isEmpty()) 
-                                                MaterialTheme.colorScheme.primary 
-                                            else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
+                                    Text(
+                                        text = if (selectedItems.isEmpty()) "None Selected" else "Clear All",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = if (selectedItems.isEmpty()) 
+                                            MaterialTheme.colorScheme.primary 
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
                             }
                         }
@@ -349,13 +365,7 @@ fun ItemPickerDialog(
                                     if (isSelected) {
                                         onItemRemoved(item)
                                     } else {
-                                        if (!allowMultiple) {
-                                            selectedItems.firstOrNull()?.let { onItemRemoved(it) }
-                                        }
                                         onItemSelected(item)
-                                    }
-                                    if (!allowMultiple) {
-                                        onDismiss()
                                     }
                                 },
                                 modifier = Modifier

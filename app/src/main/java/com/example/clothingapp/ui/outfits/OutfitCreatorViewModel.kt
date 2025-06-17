@@ -26,25 +26,25 @@ class OutfitCreatorViewModel(
     
     suspend fun saveOutfit(
         name: String,
-        hatId: Int?,
-        topId: Int?,
-        bottomId: Int?,
-        footwearId: Int?,
+        hatIds: List<Int>,
+        topIds: List<Int>,
+        bottomIds: List<Int>,
+        footwearIds: List<Int>,
         jewelryIds: List<Int>,
         accessoryIds: List<Int>
     ): Boolean {
         return try {
             // At least one item must be selected
-            if (hatId == null && topId == null && bottomId == null && footwearId == null && jewelryIds.isEmpty() && accessoryIds.isEmpty()) {
+            if (hatIds.isEmpty() && topIds.isEmpty() && bottomIds.isEmpty() && footwearIds.isEmpty() && jewelryIds.isEmpty() && accessoryIds.isEmpty()) {
                 return false
             }
             
             val outfit = Outfit(
                 name = name,
-                hatId = hatId,
-                topId = topId,
-                bottomId = bottomId,
-                footwearId = footwearId,
+                hatIds = hatIds,
+                topIds = topIds,
+                bottomIds = bottomIds,
+                footwearIds = footwearIds,
                 jewelryIds = jewelryIds,
                 accessoryIds = accessoryIds
             )

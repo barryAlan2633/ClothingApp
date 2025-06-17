@@ -20,18 +20,18 @@ class OutfitsViewModel(
         viewModelScope.launch {
             outfitDao.getAllOutfits().collect { outfitList ->
                 val outfitsWithItems = outfitList.map { outfit ->
-                    val hat = outfit.hatId?.let { clothingDao.getItemById(it) }
-                    val top = outfit.topId?.let { clothingDao.getItemById(it) }
-                    val bottom = outfit.bottomId?.let { clothingDao.getItemById(it) }
-                    val footwear = outfit.footwearId?.let { clothingDao.getItemById(it) }
+                    val hats = outfit.hatIds.mapNotNull { clothingDao.getItemById(it) }
+                    val tops = outfit.topIds.mapNotNull { clothingDao.getItemById(it) }
+                    val bottoms = outfit.bottomIds.mapNotNull { clothingDao.getItemById(it) }
+                    val footwear = outfit.footwearIds.mapNotNull { clothingDao.getItemById(it) }
                     val jewelry = outfit.jewelryIds.mapNotNull { clothingDao.getItemById(it) }
                     val accessories = outfit.accessoryIds.mapNotNull { clothingDao.getItemById(it) }
                     
                     OutfitWithItems(
                         outfit = outfit,
-                        hat = hat,
-                        top = top,
-                        bottom = bottom,
+                        hats = hats,
+                        tops = tops,
+                        bottoms = bottoms,
                         footwear = footwear,
                         jewelry = jewelry,
                         accessories = accessories

@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.*
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -33,6 +35,7 @@ import com.example.clothingapp.data.ClothingItem
 import com.example.clothingapp.data.ClothingCategory
 import com.example.clothingapp.data.MainCategory
 import com.example.clothingapp.ui.components.ClothingImageCard
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +52,16 @@ fun WardrobeScreen(
     var showDirtyOnly by remember { mutableStateOf(false) }
     var showCleanOnly by remember { mutableStateOf(false) }
     var showNeedsRepairOnly by remember { mutableStateOf(false) }
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    
+    // Gallery picker launcher
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { 
+            navController.navigate("crop/${Uri.encode(it.toString())}")
+        }
+    }
     
     // Filter the items based on search and filters
     val filteredItems = remember(clothingItems, searchQuery, selectedMainCategory, selectedSubCategory, showDirtyOnly, showCleanOnly, showNeedsRepairOnly) {
@@ -128,7 +141,7 @@ fun WardrobeScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate("camera") }
+                onClick = { showImageSourceDialog = true }
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Item")
             }
@@ -251,6 +264,54 @@ fun WardrobeScreen(
             }
         }
     }
+    
+    // Image source selection dialog
+    if (showImageSourceDialog) {
+        AlertDialog(
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("Add New Item") },
+            text = { Text("Choose how you'd like to add an image for your new clothing item") },
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = {
+                            showImageSourceDialog = false
+                            navController.navigate("camera")
+                        }
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Camera")
+                    }
+                    TextButton(
+                        onClick = {
+                            showImageSourceDialog = false
+                            galleryLauncher.launch("image/*")
+                        }
+                    ) {
+                        Icon(
+                            Icons.Default.FavoriteBorder,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Gallery")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImageSourceDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -267,10 +328,10 @@ fun CategorySection(
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 12.dp)
         )
-        
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = Modifier.height((items.size / 2 + items.size % 2) * 200.dp),
+            modifier = Modifier.height((items.size / 2 + items.size % 2) * 220.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = false
@@ -299,7 +360,7 @@ fun ClothingGridItem(
         Column {
             Box {
                 ClothingImageCard(
-                    painter = rememberAsyncImagePainter(Uri.parse(item.imageUri)),
+                    painter = rememberAsyncImagePainter(item.imageUri.toUri()),
                     contentDescription = item.name,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -415,7 +476,7 @@ fun FilterDialog(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Top app bar
+                // TopTop app bar
                 TopAppBar(
                     title = { Text("Filter Options") },
                     navigationIcon = {
@@ -460,7 +521,7 @@ fun FilterDialog(
                                     label = { Text("All") }
                                 )
                             }
-                            items(MainCategory.values().toList()) { mainCategory ->
+                            items(MainCategory.entries) { mainCategory ->
                                 FilterChip(
                                     selected = selectedMainCategory == mainCategory,
                                     onClick = { 
